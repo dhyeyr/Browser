@@ -378,7 +378,7 @@ class Home_page extends StatefulWidget {
 class _MyWebViewState extends State<Home_page> {
   InAppWebViewController? webViewController;
   PullToRefreshController? pullToRefreshController;
-
+  String? webAdd;
   @override
   void initState() {
     super.initState();
@@ -395,7 +395,7 @@ class _MyWebViewState extends State<Home_page> {
       },
     );
   }
-
+  InAppWebViewController? _webViewController;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -444,6 +444,7 @@ class _MyWebViewState extends State<Home_page> {
             },
             onSelected: (val) {
               if (val == 1) {
+
                 showModalBottomSheet(
                   isDismissible: false,
                   isScrollControlled: true,
@@ -559,23 +560,15 @@ class _MyWebViewState extends State<Home_page> {
                 );
               }
             },
+
+
+
           ),
         ],
       ),
       body: Column(
         children: [
-          Consumer<ConnectivityProvider>(
-            builder: (context, netProvider, child) {
-              if (netProvider.progress >= 1) {
-                return SizedBox.shrink();
-              }
-              return LinearProgressIndicator(
-                minHeight: 8,
-                value: netProvider.progress,
-                color: Colors.grey,
-              );
-            },
-          ),
+
           Expanded(
             child: InAppWebView(
               initialUrlRequest: URLRequest(url: WebUri(widget.url)),
@@ -601,6 +594,18 @@ class _MyWebViewState extends State<Home_page> {
                 print("progress => $progress");
               },
             ),
+          ),
+          Consumer<ConnectivityProvider>(
+            builder: (context, netProvider, child) {
+              if (netProvider.progress >= 1) {
+                return SizedBox.shrink();
+              }
+              return LinearProgressIndicator(
+                minHeight: 8,
+                value: netProvider.progress,
+                color: Colors.grey,
+              );
+            },
           ),
           Container(
             margin: EdgeInsets.all(8),
@@ -671,6 +676,8 @@ class _MyWebViewState extends State<Home_page> {
                       },
                       icon: Icon(Icons.bookmark_add, size: 30)),
                 ),
+
+
                 Container(
                   child: IconButton(
                       onPressed: value.canGoBack

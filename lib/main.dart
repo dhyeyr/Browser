@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:mirrorwall/View/home_page.dart';
 import 'package:provider/provider.dart';
 
-import 'Controller/bookmark_provider.dart';
 import 'Controller/connectivity_provider.dart';
 import 'Model/const.dart';
 import 'View/splash_screen.dart';
@@ -29,9 +28,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(
           create: (context) => ConnectivityProvider(),
         ),
-        ChangeNotifierProvider(
-          create: (context) => BookMarkProvider(),
-        ),
+
       ],
       child: Builder(
         builder: (context) {
