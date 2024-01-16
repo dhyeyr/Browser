@@ -360,11 +360,14 @@
 
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 import 'dart:io';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Controller/connectivity_provider.dart';
+import '../util.dart';
 
 class Home_page extends StatefulWidget {
   final String url;
@@ -378,11 +381,10 @@ class Home_page extends StatefulWidget {
 class _MyWebViewState extends State<Home_page> {
   InAppWebViewController? webViewController;
   PullToRefreshController? pullToRefreshController;
-  String? webAdd;
+  ConnectivityResult _connectionStatus = ConnectivityResult.none;
+  late Connectivity _connectivity;
   @override
   void initState() {
-    super.initState();
-
     pullToRefreshController = PullToRefreshController(
       onRefresh: () async {
         if (Platform.isAndroid) {
@@ -394,6 +396,7 @@ class _MyWebViewState extends State<Home_page> {
         }
       },
     );
+    getList();
   }
   InAppWebViewController? _webViewController;
   @override
@@ -444,7 +447,6 @@ class _MyWebViewState extends State<Home_page> {
             },
             onSelected: (val) {
               if (val == 1) {
-
                 showModalBottomSheet(
                   isDismissible: false,
                   isScrollControlled: true,
@@ -472,6 +474,41 @@ class _MyWebViewState extends State<Home_page> {
                               ),
                             ),
                           ),
+                          Consumer<ConnectivityProvider>(
+                            builder: (context, netProvider, child) {
+                              return (localLink.length == 0)
+                                  ? Center(
+                                child: Text(
+                                  "No any bookmarks yet...",
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                              )
+                                  : Expanded(
+                                child: ListView.builder(
+                                  itemCount: localLink.length,
+                                  itemBuilder: (context, index) {
+                                    return ListTile(
+                                      title: Text(
+                                        localLink1[index],
+                                        maxLines: 1,
+                                      ),
+                                      subtitle: Text(localLink[index],
+                                          maxLines: 1),
+                                      trailing: IconButton(
+                                        onPressed: () {
+                                          Provider.of<ConnectivityProvider>(
+                                              context,
+                                              listen: false)
+                                              .removeBookmark(index);
+                                        },
+                                        icon: Icon(Icons.close),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          )
                         ],
                       ),
                     );
@@ -568,7 +605,23 @@ class _MyWebViewState extends State<Home_page> {
       ),
       body: Column(
         children: [
+          Container(
+            // padding: EdgeInsets.all(8),
+             margin: EdgeInsets.only(left: 8),
 
+            height: 40,
+            width: double.infinity,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Text(
+                Provider.of<ConnectivityProvider>(context).currentUrl,
+                style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w500),
+              ),
+            ),
+          ),
           Expanded(
             child: InAppWebView(
               initialUrlRequest: URLRequest(url: WebUri(widget.url)),
@@ -576,17 +629,9 @@ class _MyWebViewState extends State<Home_page> {
                 webViewController = controller;
               },
               pullToRefreshController: pullToRefreshController,
-              onLoadStop: (controller, url) async {
-                var canGoBack = await controller.canGoBack();
-                var canGoForward = await controller.canGoForward();
-                print("mounted $mounted");
-
-                if (mounted) {
-                  Provider.of<ConnectivityProvider>(context, listen: false)
-                      .backForwardStatus(canGoBack, canGoForward);
-                }
-
-                print("canGoBack $canGoBack");
+              onLoadStop: (controller, url) {
+                updatePageInfo(controller);
+                var d = Provider.of<ConnectivityProvider>(context, listen: false);
               },
               onProgressChanged: (controller, progress) {
                 Provider.of<ConnectivityProvider>(context, listen: false)
@@ -595,6 +640,26 @@ class _MyWebViewState extends State<Home_page> {
               },
             ),
           ),
+          StreamBuilder<ConnectivityResult>(
+              stream: Connectivity().onConnectivityChanged,
+              builder: (context, snapshot) {
+                if (snapshot.data == ConnectivityResult.wifi || snapshot.data == ConnectivityResult.mobile) {
+                  return SizedBox.shrink();
+                } else {
+                  return Container(
+                    color: Colors.red,
+                    width: double.infinity,
+                    height: 40,
+                    padding: EdgeInsets.all(8),
+                    child: Center(
+                        child: Text(
+                          "No Connection..",
+                          style: TextStyle(color: Colors.white),
+                        )),
+                  );
+                }
+              }),
+
           Consumer<ConnectivityProvider>(
             builder: (context, netProvider, child) {
               if (netProvider.progress >= 1) {
@@ -607,6 +672,7 @@ class _MyWebViewState extends State<Home_page> {
               );
             },
           ),
+
           Container(
             margin: EdgeInsets.all(8),
             padding: EdgeInsets.all(8),
@@ -667,12 +733,21 @@ class _MyWebViewState extends State<Home_page> {
                 Container(
                   child: IconButton(
                       onPressed: () async {
-                        webViewController?.loadUrl(
-                            urlRequest: URLRequest(
-                                url: await webViewController?.getUrl()));
-                        var link =
-                        URLRequest(url: await webViewController?.getUrl());
-                        print("link ==> $link");
+                        var a =
+                        Provider.of<ConnectivityProvider>(context, listen: false);
+
+                        if (localLink.contains(a.currentUrl)) {
+                          showDuplicateBookmarkAdd(context);
+                        } else {
+                          showBookmarkAdd(context);
+                          localLink1.add(a.pageTitle);
+                          localLink.add(a.currentUrl);
+                        }
+
+                        SharedPreferences prefs =
+                        await SharedPreferences.getInstance();
+                        prefs.setStringList('link', localLink);
+                        prefs.setStringList('link1', localLink1);
                       },
                       icon: Icon(Icons.bookmark_add, size: 30)),
                 ),
@@ -712,12 +787,58 @@ class _MyWebViewState extends State<Home_page> {
                         size: 30,
                         color: Colors.black12,
                       )),
+
                 ),
               ],
             );
           }),
           SizedBox(height: 16),
+
         ],
+      ),
+    );
+  }
+
+  void getList() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String>? storedLinks = prefs.getStringList('link');
+    List<String>? storedLinks1 = prefs.getStringList('link1');
+
+    if (storedLinks1 != null && storedLinks1.isNotEmpty) {
+      localLink1 = storedLinks1;
+    } else {}
+    if (storedLinks != null && storedLinks.isNotEmpty) {
+      localLink = storedLinks;
+    }
+  }
+
+  void updatePageInfo(InAppWebViewController controller) async {
+    var d = Provider.of<ConnectivityProvider>(context, listen: false);
+    String? title = await controller.getTitle();
+    d.pageTitle = title ?? '';
+    var canGoBack = await controller.canGoBack();
+    var canGoForward = await controller.canGoForward();
+    d.currentUrl = (await controller.getUrl())?.toString() ?? '';
+    if (mounted) {
+      Provider.of<ConnectivityProvider>(context, listen: false)
+          .backForwardStatus(canGoBack, canGoForward);
+    }
+  }
+
+  void showBookmarkAdd(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Center(child: Text('Added to Bookmark')),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void showDuplicateBookmarkAdd(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Center(child: Text('Already Added to Bookmark')),
+        duration: Duration(seconds: 2),
       ),
     );
   }
