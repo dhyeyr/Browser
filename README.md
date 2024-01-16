@@ -1,16 +1,23 @@
-# mirrorwall
+# Browser
 
-A new Flutter project.
+## Project Overview
 
-## Getting Started
+Welcome to the Browser ! This Flutter-based application provides a seamless experience with various features .The application will enable users to browse the internet within the app by using a WebView widget to display web content from websites.
 
-This project is a starting point for a Flutter application.
+## Project Features
 
-A few resources to get you started if this is your first Flutter project:
+- **Web View:** - To enable users to browse the internet within the app using a WebView widget to display web content.
+- **Bookmark** - Add to Bookmark With Url and it's Title
+- **Local Storage:** Store the Url[Bookmakr] Locally Using Sharedprefrences
+- **SearchEngine Switching:** Switch Various Search Engine Interface design seamlessly.
+- **Check Internet :** Checking Internet Connection.Also give a message when connection is lost.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Technologies Used
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- **Dart Language:** The programming language used for Flutter app development.
+- **Flutter Framework:** Developed using Flutter with an MVC (Model-View-Controller) and Provider architecture.
+- **Local Storage:** Utilizes the shared_preferences package for efficient local data storage.
+- **Connectivity_Plus:** Check the device connection is mobiledata or wi-fi.
+
+## Screenshots
+<img src="https://github.com/dhyeyr/Browser/assets/143472343/60b19008-aa52-4293-8591-46736421ff0d">
